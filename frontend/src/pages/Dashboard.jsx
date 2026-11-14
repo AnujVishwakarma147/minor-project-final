@@ -1,5 +1,6 @@
 
 import { useState, useRef, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 import {
   ShieldCheck,
@@ -23,6 +24,14 @@ import {
 } from "../utils/crypto";
 
 function Dashboard() {
+  const navigate = useNavigate();
+  const storedUser = localStorage.getItem("user") || sessionStorage.getItem("user");
+  let currentUser = null;
+  try {
+    currentUser = storedUser ? JSON.parse(storedUser) : null;
+  } catch {
+    currentUser = null;
+  }
   const fileInputRef = useRef(null);
 
   const [files, setFiles] = useState([
@@ -268,11 +277,17 @@ function Dashboard() {
 
         <div className="flex items-center gap-4">
           <span className="hidden text-sm text-gray-400 sm:block">
-            Welcome, User
+            Welcome, {currentUser?.name || "User"}
           </span>
 
           <button
-            onClick={() => (window.location.href = "/login")}
+            onClick={() => {
+              localStorage.removeItem("token");
+              localStorage.removeItem("user");
+              sessionStorage.removeItem("token");
+              sessionStorage.removeItem("user");
+              navigate("/login", { replace: true });
+            }}
             className="flex items-center gap-2 rounded-lg border border-white/10 px-4 py-2 hover:bg-white/10"
           >
             <LogOut size={17} />

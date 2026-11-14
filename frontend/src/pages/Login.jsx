@@ -1,6 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   ShieldCheck,
   LockKeyhole,
@@ -10,41 +9,63 @@ import {
   ArrowRight,
 } from "lucide-react";
 
+const API_URL = (import.meta.env.VITE_API_URL || "http://localhost:5000").replace(/\/+$/, "");
+
 function Login() {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
+    setFormData((previousData) => ({
+      ...previousData,
       [e.target.name]: e.target.value,
-    });
+    }));
   };
 
-  //   const handleSubmit = (e) => {
-  //     e.preventDefault();
-
-  //     if (!formData.email || !formData.password) {
-  //       alert("Please fill all fields");
-  //       return;
-  //     }
-
-  //     alert("Login UI working! Backend will be connected later.");
-  //   };
-
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setError("");
 
-    if (!formData.email || !formData.password) {
-      alert("Please fill all fields");
+    if (!formData.email.trim() || !formData.password) {
+      setError("Please enter your email and password.");
       return;
     }
 
-    navigate("/dashboard");
+    try {
+      setLoading(true);
+      const response = await fetch(`${API_URL}/api/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: formData.email.trim().toLowerCase(),
+          password: formData.password,
+        }),
+      });
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok || !data.success || !data.token || !data.user) {
+        throw new Error(data.message || "Login failed. Please try again.");
+      }
+
+      const storage = rememberMe ? window.localStorage : window.sessionStorage;
+      const otherStorage = rememberMe ? window.sessionStorage : window.localStorage;
+      otherStorage.removeItem("token");
+      otherStorage.removeItem("user");
+      storage.setItem("token", data.token);
+      storage.setItem("user", JSON.stringify(data.user));
+      navigate("/dashboard", { replace: true });
+    } catch (err) {
+      setError(err.message || "Unable to connect to the server.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -125,21 +146,30 @@ function Login() {
             {/* Remember me */}
             <div className="flex items-center justify-between text-sm">
               <label className="flex items-center gap-2 text-gray-400">
-                <input type="checkbox" className="accent-blue-600" />
+                <input
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(event) => setRememberMe(event.target.checked)}
+                  className="accent-blue-600"
+                />
                 Remember me
               </label>
 
-              <a href="#" className="text-blue-400 hover:text-blue-300">
-                Forgot password?
-              </a>
             </div>
+
+            {error && (
+              <div role="alert" className="rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-400">
+                {error}
+              </div>
+            )}
 
             {/* Submit */}
             <button
               type="submit"
+              disabled={loading}
               className="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 py-3.5 font-semibold transition hover:bg-blue-700"
             >
-              Login
+              {loading ? "Logging in..." : "Login"}
               <ArrowRight size={18} />
             </button>
           </form>

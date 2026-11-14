@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   ShieldCheck,
   User,
@@ -18,14 +18,13 @@ import {
   exportPublicKey,
 } from "../utils/crypto";
 
+const API_URL = (import.meta.env.VITE_API_URL || "http://localhost:5000").replace(/\/+$/, "");
+
 function Register() {
+  const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
   const [error, setError] = useState("");
-
-  // Temporarily keep prepared registration data in memory.
-  const [registrationData, setRegistrationData] = useState(null);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -35,22 +34,20 @@ function Register() {
   });
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+    const { name, value } = e.target;
 
-    setMessage("");
+    setFormData((previousData) => ({
+      ...previousData,
+      [name]: value,
+    }));
+
     setError("");
-    setRegistrationData(null);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    setMessage("");
     setError("");
-    setRegistrationData(null);
 
     if (Object.values(formData).some((value) => !value.trim())) {
       setError("Please fill all fields");
@@ -70,63 +67,58 @@ function Register() {
     try {
       setLoading(true);
 
-      // STEP 1: Generate RSA Key Pair in browser
+      // STEP 1: Generate RSA key pair in the browser
       const keyPair = await generateRSAKeyPair();
 
-      // STEP 2: Export Public Key
-      const publicKey = await exportPublicKey(
-        keyPair.publicKey
-      );
+      // STEP 2: Export the public key
+      const publicKey = await exportPublicKey(keyPair.publicKey);
 
-      // STEP 3: Encrypt Private Key using user password
+      // STEP 3: Encrypt the private key using the user's password
       const encryptedKeyData = await encryptPrivateKey(
         keyPair.privateKey,
         formData.password
       );
 
-      // STEP 4: Prepare registration payload
-      const preparedData = {
+      // STEP 4: Prepare data for backend registration
+      const registrationPayload = {
         name: formData.name.trim(),
         email: formData.email.trim().toLowerCase(),
-
-        publicKey: publicKey,
-
+        password: formData.password,
+        publicKey,
         encryptedPrivateKey:
           encryptedKeyData.encryptedPrivateKey,
-
         salt: encryptedKeyData.salt,
-
         iv: encryptedKeyData.iv,
-
-        iterations: encryptedKeyData.iterations,
-
-        algorithm: encryptedKeyData.algorithm,
-
-        keyDerivation: encryptedKeyData.keyDerivation,
       };
 
-      // Keep prepared data in memory for the next backend step.
-      // Never store the plaintext password or private key.
-      setRegistrationData(preparedData);
-
-      setMessage(
-        "Cryptographic keys generated and Private Key encrypted successfully!"
+      // STEP 5: Send registration data to backend
+      const response = await fetch(
+        `${API_URL}/api/auth/register`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(registrationPayload),
+        }
       );
 
-      console.log("SecureVault registration preparation successful.");
-      console.log("Public Key generated:", Boolean(publicKey));
-      console.log(
-        "Encrypted Private Key generated:",
-        Boolean(encryptedKeyData.encryptedPrivateKey)
-      );
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok || !data.success) {
+        throw new Error(
+          data.message || "Registration failed. Please try again."
+        );
+      }
+
+      navigate("/", { replace: true });
 
     } catch (err) {
-      console.error("Registration preparation failed:", err);
+      console.error("Registration Error:", err);
 
       setError(
         err.message || "Something went wrong. Please try again."
       );
-
     } finally {
       setLoading(false);
     }
@@ -134,11 +126,13 @@ function Register() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#080d1a] px-4 py-10 text-white">
-
       <div className="w-full max-w-md">
 
         {/* Logo */}
-        <Link to="/" className="mb-8 flex items-center justify-center gap-2">
+        <Link
+          to="/"
+          className="mb-8 flex items-center justify-center gap-2"
+        >
           <div className="rounded-xl bg-blue-600 p-2">
             <ShieldCheck size={27} />
           </div>
@@ -229,7 +223,11 @@ function Register() {
                   onClick={() => setShowPassword(!showPassword)}
                   className="text-gray-500 hover:text-white"
                 >
-                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  {showPassword ? (
+                    <EyeOff size={18} />
+                  ) : (
+                    <Eye size={18} />
+                  )}
                 </button>
               </div>
             </div>
@@ -273,13 +271,6 @@ function Register() {
               </div>
             )}
 
-            {/* Success Message */}
-            {message && (
-              <div className="rounded-lg border border-green-500/30 bg-green-500/10 p-3 text-sm text-green-400">
-                {message}
-              </div>
-            )}
-
             {/* Submit */}
             <button
               type="submit"
@@ -289,7 +280,7 @@ function Register() {
               {loading ? (
                 <>
                   <Loader2 size={18} className="animate-spin" />
-                  Generating Secure Keys...
+                  Creating Secure Account...
                 </>
               ) : (
                 <>
@@ -298,7 +289,6 @@ function Register() {
                 </>
               )}
             </button>
-
           </form>
 
           <p className="mt-6 text-center text-sm text-gray-400">
@@ -311,32 +301,7 @@ function Register() {
             </Link>
           </p>
 
-          {/* Cryptography Status */}
-          {registrationData && (
-            <div className="mt-6 rounded-xl border border-blue-500/30 bg-blue-500/10 p-4">
-
-              <h3 className="mb-3 font-semibold text-blue-400">
-                <ShieldCheck size={18} className="mr-2 inline" />
-                Cryptography Status
-              </h3>
-
-              <div className="space-y-2 text-sm text-gray-300">
-                <p>✓ RSA-2048 Key Pair Generated</p>
-                <p>✓ Public Key Exported</p>
-                <p>✓ PBKDF2 Key Derivation Completed</p>
-                <p>✓ Private Key Encrypted with AES-256-GCM</p>
-                <p>✓ Registration Data Prepared</p>
-              </div>
-
-              <p className="mt-3 text-xs text-gray-400">
-                Backend and database registration are not connected yet.
-              </p>
-
-            </div>
-          )}
-
         </div>
-
       </div>
     </div>
   );

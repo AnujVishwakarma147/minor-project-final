@@ -9,8 +9,8 @@ import {
   Shield,
   KeyRound,
   CheckCircle2,
-  Menu,
 } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const features = [
   {
@@ -44,14 +44,14 @@ function Home() {
     <div className="min-h-screen bg-[#080d1a] text-white">
       {/* Navbar */}
       <nav className="mx-auto flex max-w-7xl items-center justify-between px-6 py-6">
-        <a href="#" className="flex items-center gap-2">
+        <Link to="/" className="flex items-center gap-2">
           <div className="rounded-xl bg-blue-600 p-2">
             <ShieldCheck size={25} />
           </div>
           <span className="text-2xl font-bold tracking-tight">
             Secure<span className="text-blue-500">Vault</span>
           </span>
-        </a>
+        </Link>
 
         <div className="hidden items-center gap-8 text-sm text-gray-300 md:flex">
           <a href="#features" className="transition hover:text-blue-400">
@@ -66,18 +66,18 @@ function Home() {
         </div>
 
         <div className="flex items-center gap-3">
-          <a
-            href="#get-started"
+          <Link
+            to="/login"
             className="hidden rounded-lg px-4 py-2 text-sm text-gray-200 transition hover:text-blue-400 sm:block"
           >
             Login
-          </a>
-          <a
-            href="#get-started"
+          </Link>
+          <Link
+            to="/register"
             className="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold transition hover:bg-blue-700"
           >
             Get Started
-          </a>
+          </Link>
         </div>
       </nav>
 
@@ -104,13 +104,13 @@ function Home() {
           </p>
 
           <div className="mt-9 flex flex-wrap gap-4">
-            <a
-              href="#get-started"
+            <Link
+              to="/register"
               className="flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-3.5 font-semibold transition hover:bg-blue-700"
             >
               Get Started
               <ArrowRight size={19} />
-            </a>
+            </Link>
 
             <a
               href="#features"
@@ -297,13 +297,13 @@ function Home() {
             Your personal files deserve better protection. Start your secure
             storage journey with SecureVault.
           </p>
-          <a
-            href="#"
+          <Link
+            to="/register"
             className="mt-8 inline-flex items-center gap-2 rounded-xl bg-blue-600 px-7 py-3.5 font-semibold transition hover:bg-blue-700"
           >
             Get Started
             <ArrowRight size={19} />
-          </a>
+          </Link>
         </div>
       </section>
 
