@@ -43,7 +43,7 @@ export async function generateRSAKeyPair() {
       hash: "SHA-256",
     },
     true,
-    ["wrapKey", "unwrapKey"]
+    ["encrypt", "wrapKey", "decrypt", "unwrapKey"]
   );
 
   return keyPair;
@@ -198,7 +198,7 @@ export async function decryptPrivateKey(encryptedData, password) {
         hash: "SHA-256",
       },
       false,
-      ["unwrapKey"]
+      ["decrypt", "unwrapKey"]
     );
 
     return privateKey;
@@ -241,8 +241,22 @@ export async function importPublicKey(publicKeyBase64) {
       hash: "SHA-256",
     },
     true,
-    ["wrapKey"]
+    ["encrypt", "wrapKey"]
   );
+}
+
+export async function encryptName(name, publicKey) {
+  const encrypted = await window.crypto.subtle.encrypt(
+    { name: "RSA-OAEP" }, publicKey, new TextEncoder().encode(name)
+  );
+  return arrayBufferToBase64(encrypted);
+}
+
+export async function decryptName(ciphertext, privateKey) {
+  const plaintext = await window.crypto.subtle.decrypt(
+    { name: "RSA-OAEP" }, privateKey, base64ToArrayBuffer(ciphertext)
+  );
+  return new TextDecoder().decode(plaintext);
 }
 
 // ============================================
@@ -299,7 +313,8 @@ export async function encryptFile(file, publicKey) {
 
   return {
     encryptedBlob,
-    wrappedKey,
+    wrappedKey: arrayBufferToBase64(wrappedKey),
+    iv: arrayBufferToBase64(iv),
   };
 }
 
@@ -316,7 +331,7 @@ export async function decryptFile(
   // Recover AES key using RSA private key
   const aesKey = await window.crypto.subtle.unwrapKey(
     "raw",
-    wrappedKey,
+    typeof wrappedKey === "string" ? base64ToArrayBuffer(wrappedKey) : wrappedKey,
     privateKey,
     {
       name: "RSA-OAEP",

@@ -1,12 +1,11 @@
 import express from "express";
 import cors from "cors";
-import dotenv from "dotenv";
+import "dotenv/config";
 import connectDB from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import fileRoutes from "./routes/fileRoutes.js";
-
-dotenv.config();
+import { storageDriver } from "./config/storage.js";
 
 const app = express();
 const allowedOrigins = (process.env.FRONTEND_URL || "http://localhost:5173")
@@ -86,6 +85,7 @@ const startServer = async () => {
     }
 
     await connectDB();
+    console.log(`Encrypted file storage: ${storageDriver}`);
 
     const PORT = process.env.PORT || 5000;
 
