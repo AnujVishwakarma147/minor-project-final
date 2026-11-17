@@ -111,7 +111,23 @@ function Register() {
         );
       }
 
-      navigate("/", { replace: true });
+      if (!data.token || !data.user) {
+        throw new Error("Account created, but sign-in could not be completed. Please log in.");
+      }
+
+      // Registration returns the same auth credentials as login. Keep the
+      // session in sessionStorage, matching Login's default behavior.
+      const user = {
+        ...data.user,
+        encryptedPrivateKey: encryptedKeyData.encryptedPrivateKey,
+        salt: encryptedKeyData.salt,
+        iv: encryptedKeyData.iv,
+      };
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      sessionStorage.setItem("token", data.token);
+      sessionStorage.setItem("user", JSON.stringify(user));
+      navigate("/dashboard", { replace: true });
 
     } catch (err) {
       console.error("Registration Error:", err);

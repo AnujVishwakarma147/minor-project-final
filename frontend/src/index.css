@@ -1,10 +1,86 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap");
 @import "tailwindcss";
 
 * {
   box-sizing: border-box;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   margin: 0;
-  font-family: Inter, sans-serif;
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  background: #060a16;
+  color: #fff;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---------- Premium look helpers (used by the dashboard) ---------- */
+
+.bg-aurora {
+  background:
+    radial-gradient(60rem 30rem at 8% -10%, rgba(59, 130, 246, 0.2), transparent 60%),
+    radial-gradient(50rem 28rem at 100% 0%, rgba(139, 92, 246, 0.18), transparent 60%),
+    #060a16;
+}
+
+.glass {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.02));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 12px 32px -14px rgba(0, 0, 0, 0.65);
+}
+
+.text-gradient {
+  background: linear-gradient(90deg, #60a5fa, #a78bfa);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #3b82f6, #7c3aed);
+  box-shadow: 0 8px 24px -10px rgba(99, 102, 241, 0.9);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+}
+
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 28px -10px rgba(99, 102, 241, 1);
+}
+
+.font-mono-code {
+  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.fade-in {
+  animation: fadeIn 0.35s ease both;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+}
+
+/* React Flow: keep the diagram transparent so it blends with the page */
+.react-flow {
+  background: transparent !important;
 }
